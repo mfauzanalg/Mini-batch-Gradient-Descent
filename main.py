@@ -1,4 +1,4 @@
-import FFNN
+import MBGD
 import pandas as pd
 
 df = pd.read_csv("./dataset.csv")
@@ -7,8 +7,12 @@ data = df.drop(columns=["label"], inplace=False)
 label = label.values
 data = data.values
 
-ffnn = FFNN.FFNN()
-ffnn.setBias(1)
-ffnn.loadModel(filename="model.json")
-print(ffnn.predict(data))
-ffnn.printmodel()
+mbgd = MBGD.MBGD()
+mbgd.setBias(1)
+
+hidden1 = mbgd.createHiddenLayer(2, 2)
+output = mbgd.createOutputLayer(2)
+
+mbgd.setLayer([hidden1, output])
+
+mbgd.fit(data, label)

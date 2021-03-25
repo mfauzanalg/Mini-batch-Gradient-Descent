@@ -34,7 +34,7 @@ def arrayMultiplication(x_array, w_array, length):
 def derivate_Ed_To_Oj(target_j, output_j, activationFunction):
   if (activationFunction != softMax):
     return (-1) * (target_j - output_j)
-  else :
+  else : # Help ini
     return softMax
 
 def derivate_Oj_To_NETj(output_j, activationFunction):
@@ -44,11 +44,11 @@ def derivate_Oj_To_NETj(output_j, activationFunction):
     return 1
   elif (activationFunction == reLu):
     return 1 if (output_j) >= 0 else 0
-  else : # Softmax
-    return 0
+  else : # Softmax buat target class, ryan tolong isi
+    return 0 # Isi sama turunan softmax
 
-def derivate_NETj_To_Wji(x_ji):
-  return x_ji
+def getErrorNodeOutput(target_j, output_j, activationFunction):
+  return (-1) * (derivate_Ed_To_NETj(target_j, output_j, activationFunction) * derivate_Oj_To_NETj(output_j, activationFunction))
 
 # For Hidden Layer
 # d(Ed)/d(Wji) = d(Ed)/d(NETj) * d(NETj)/d(Wji)
@@ -56,21 +56,18 @@ def derivate_NETj_To_Wji(x_ji):
 # Thus -> d(Ed)/d(Wji) = d(Ed)/d(NETk) * d(NETk)/d(Oj) * d(Oj)/d(NETj)* d(NETj)/d(Wji)
 
 # For Softmax
-def derivate_Ed_To_NETj(activationFunction, pj = None, errorNode_k = None, w_kj = None, output_j = None, x_ji = None): # Ini masih gatau bray
-  if (activationFunction == softMax):
-    return pj
-  else :
-    return derivate_Ed_To_NETk(errorNode_k) * derivate_NETk_To_Oj(w_kj) * derivate_Oj_To_NETj(output_j, activationFunction)
+def derivate_Ed_To_NETj(activationFunction, sigma,  output_j): # Ini masih gatau bray
+  return sigma * derivate_Oj_To_NETj(output_j, activationFunction)
+
+def derivate_Ed_To_NETj_Softmax(pj):
+  return pj
 
 
-def derivate_Ed_To_NETk(errorNode_k):
-  return (-1) * (errorNode_k)
+# def derivate_Ed_To_NETk(errorNode_k):
+#   return (-1) * (errorNode_k)
 
-def derivate_NETk_To_Oj(w_kj):
-  return w_kj
+# def derivate_NETk_To_Oj(w_kj):
+#   return w_kj
 
-# def derivate_Oj_To_NETj(output_j, activationFunction):
-# Same derivate with the output layer
-
-def derivate_NETj_To_Wji(x_ji):
-  return x_ji
+# BACA INI
+# Get Error Node for Hidden Neuron bikin di MBGD karena ada softmax

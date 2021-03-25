@@ -41,3 +41,6 @@ class Layer:
   def getNeuronArray(self):
     return self.neuron_array
   
+  def getActivationFunction(self):
+    return self.activationFunction
+  

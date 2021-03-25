@@ -6,6 +6,7 @@ class Neuron:
     self.weight = []
     self.bias = bias
     self.accumulative_delta = []
+    self.output = 0
 
   def setWeight(self, weight):
     self.weight = weight
