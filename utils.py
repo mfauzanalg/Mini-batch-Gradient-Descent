@@ -61,7 +61,6 @@ def derivate_Ed_To_NETj(activationFunction, sigma,  output_j): # Ini masih gatau
 
 def derivate_Ed_To_NETj_Softmax(pj):
   return pj
-p
 
 # def derivate_Ed_To_NETk(errorNode_k):
 #   return (-1) * (errorNode_k)

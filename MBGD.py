@@ -4,7 +4,7 @@ import json
 class MBGD:
   
   # Masih kurang struktur jaringannya (jumlah layer, jumlah neuron setiap layer, fungsi aktivasi setiap layer)
-  def __init__(self, learning_rate=0.1, error_threshold=1, max_iter=200, batch_size=4, initial_weight=0.5):
+  def __init__(self, learning_rate=0.1, error_threshold=1.0048, max_iter=2000, batch_size=0, initial_weight=0.5):
     self.learning_rate = learning_rate
     self.error_threshold = error_threshold
     self.max_iter = max_iter
@@ -48,27 +48,46 @@ class MBGD:
     self.layerArray.insert(0,newLayer)
 
   def fit(self, dataset, label):
-    while (self.epoch < self.max_iter or self.error > self.error_threshold):
-      currentError = 0
-      # E = 0
-      n_processed = 0
-      update_weight = False
+    n_processed = 0
+    self.error = 999999999999999
 
+    while (self.epoch < self.max_iter and self.error > self.error_threshold):
+      # E = 0
+      update_weight = False
+      self.error = 0
       for index_data, data in enumerate(dataset):
         # FORWARD PROPAGATION
         # result_output_layer = None
         prevLayerInputArray = data
 
         #if n process%batchsize = 0 updet w
-        if (self.batch_size != 0 and n_processed % self.batch_size == 0):
-          print("CCD")
+        if (self.batch_size != 0 and n_processed != 0 and n_processed % self.batch_size == 0):
           for layer in self.layerArray:
             for neuron in layer.getNeuronArray():
               accumulative_delta = neuron.getAccumulativeDelta()
-              for index_weight, weight in enumerate(neuron.getWeightArray()):
-                weight += accumulative_delta[index_weight]
+              weight_arr = neuron.getWeightArray()
+              for index_weight in range(len(weight_arr)):
+                weight_arr[index_weight] += accumulative_delta[index_weight]
+              neuron.accumulative_delta = []
+                
+        if(n_processed % len(dataset) == 0 and self.batch_size != len(dataset)):
+          for layer in self.layerArray:
+            for neuron in layer.getNeuronArray():
+              accumulative_delta = neuron.getAccumulativeDelta()
+              weight_arr = neuron.getWeightArray()
+              for index_weight in range(len(weight_arr)):
+                if (self.epoch == 2):
+                  print(weight_arr[index_weight], "Before")
+                  print(accumulative_delta)
+                  print(accumulative_delta[index_weight], "ACCCC")
+                weight_arr[index_weight] += accumulative_delta[index_weight]
+                if (self.epoch == 2):
+                  print(weight_arr[index_weight], "after")
+                  print()
+              neuron.accumulative_delta = []
 
         n_processed+=1
+
         for layerNum in range(len(self.layerArray)):
           layer = self.layerArray[layerNum]
           nextLayerInputArray = []
@@ -88,7 +107,7 @@ class MBGD:
               if (len(neuron.getWeightArray()) == 0):
                 neuron.setWeight([self.initial_weight for i in range(len(prevLayerInputArray))])
               
-              print(neuron.getWeightArray())
+
               sigma = arrayMultiplication(prevLayerInputArray, neuron.getWeightArray(), len(prevLayerInputArray))
               nextLayerInputArray.append(sigma)
               # update weight (lRate * (yi - oi)*xi)
@@ -97,14 +116,11 @@ class MBGD:
               if (neuron_idx == (len(layer.getNeuronArray())-1)):
                 # activate and append to nextLayer
                 nextLayerInputArray.pop(0)
+                
                 nextLayerInputArray = layer.activationFunction(nextLayerInputArray) # oi arr
                 nextLayerInputArray.insert(0, self.bias)
                 self.layerArray[layerNum].output_array = nextLayerInputArray
-                prevLayerInputArray = nextLayerInputArray 
-
-
-        # print("HADEH")
-        # print(nextLayerInputArray)
+                prevLayerInputArray = nextLayerInputArray
 
         # BACKWARD
         targetMinOutputArr = []
@@ -115,9 +131,9 @@ class MBGD:
         targetMinOutputArr.pop(0)
         nextLayerInputArray.pop(0)
 
-        for diff in targetMinOutputArr:
-          currentError = currentError + (diff) * (diff) / 2
-          self.error = currentError
+        for diff_idx in range(len(targetMinOutputArr)):
+          diff = targetMinOutputArr[diff_idx]
+          self.error += diff*diff/2
 
         for layerNum in range(len(self.layerArray) - 1, 0, -1):
           layer = self.layerArray[layerNum]
@@ -128,23 +144,23 @@ class MBGD:
               neuron = layer.getNeuron(neuron_idx)
               # Target, Output, Layer.type
               neuron.errorNode = getErrorNodeOutput(label[index_data], nextLayerInputArray[neuron_idx], layer.type)
-              # print("HADEH")
-              # print(neuron.errorNode)
 
           # Sekarang ada di layer hidden
           else:
+            nextLayer = self.layerArray[layerNum + 1]
             for neuron_idx in range(0, len(layer.getNeuronArray())):
               neuron = layer.getNeuron(neuron_idx)
-              nextLayer = self.layerArray[layerNum + 1]
               
               if (layer.getActivationFunction() == 4): # Softmax
-                neuron.errorNode = "Isi yan"
+                neuron.errorNode = ""
+                
               else:
                 totalWkhDk = 0
                 for nextLayerNeuron_idx in range(len(nextLayer.getNeuronArray())):
                   nextLayerNeuron = nextLayer.getNeuron(nextLayerNeuron_idx)
-                  thisNeuronWeight = neuron.getWeight(nextLayerNeuron_idx)
-                  totalWkhDk = totalWkhDk + nextLayerNeuron.errorNode * thisNeuronWeight
+                  thisNeuronWeight = nextLayerNeuron.getWeight(neuron_idx+1)
+                  totalWkhDk += nextLayerNeuron.errorNode * thisNeuronWeight
+
                 neuron.errorNode = derivate_Ed_To_NETj(layer.type, totalWkhDk, layer.output_array[neuron_idx+1])
 
         # Delta Weight Update
@@ -172,24 +188,11 @@ class MBGD:
                   accumulative_delta[layerNeuron_idx] += self.learning_rate * layerNeuron.errorNode * prevLayer.output_array[layerNeuron_idx]
                 else :
                   accumulative_delta.append(self.learning_rate * layerNeuron.errorNode * prevLayer.output_array[layerNeuron_idx])
-          
-              
-                # print(self.learning_rate * layerNeuron.getErrorNode() * )
-              
               neuron.setAccumulativeDelta(accumulative_delta)
-
-        
-        # errorNodeOutput = []
-        # for index_output in range
-        # getErrorNodeOutput() 
-        # gatau fungsinya apa
-        
-        
-        # Last Layer (Output Layer)
-        # if (layerNum == (len(self.layerArray)-1)):
-        #   result_output_layer = prevLayerInputArray
-
-      # iniiiiiii itung erreo
+              
+      self.epoch += 1
+      print(self.error)
+      print(self.error_threshold)
 
   # INI BEKAS YG FFNN
   def predict(self, dataset):
