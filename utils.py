@@ -1,5 +1,6 @@
 import math
 import numpy as np
+from scipy.special import softmax
 
 def linear(arr):
   res = []
@@ -35,7 +36,7 @@ def derivate_Ed_To_Oj(target_j, output_j, activationFunction):
   if (activationFunction != 4):
     return (-1) * (target_j - output_j)
   else : # Help ini
-    return softMax
+    return "APA INIIIIII"
 
 def derivate_Oj_To_NETj(output_j, activationFunction):
   if (activationFunction == 2):
@@ -59,8 +60,11 @@ def getErrorNodeOutput(target_j, output_j, activationFunction):
 def derivate_Ed_To_NETj(activationFunction, sigma,  output_j): # Ini masih gatau bray
   return sigma * derivate_Oj_To_NETj(output_j, activationFunction)
 
-def derivate_Ed_To_NETj_Softmax(pj):
-  return pj
+def derivate_Ed_To_NETj_Softmax(pj, target_j):
+  if (pj == target_j):
+    return pj
+  else:
+    return -(1 - pj)
 
 # def derivate_Ed_To_NETk(errorNode_k):
 #   return (-1) * (errorNode_k)

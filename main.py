@@ -16,3 +16,6 @@ output = mbgd.createOutputLayer(2)
 mbgd.setLayer([hidden1, output])
 
 mbgd.fit(data, label)
+
+mbgd.printmodel()
+print(mbgd.predict(data))
