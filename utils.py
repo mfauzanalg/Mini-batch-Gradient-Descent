@@ -32,23 +32,23 @@ def arrayMultiplication(x_array, w_array, length):
 # For Output Layer
 # d(Ed)/d(Wji) = d(Ed)/d(Oj) * d(Oj)/d(NETj) * d(NETj)/d(Wji)
 def derivate_Ed_To_Oj(target_j, output_j, activationFunction):
-  if (activationFunction != softMax):
+  if (activationFunction != 4):
     return (-1) * (target_j - output_j)
   else : # Help ini
     return softMax
 
 def derivate_Oj_To_NETj(output_j, activationFunction):
-  if (activationFunction == sigmoid):
+  if (activationFunction == 2):
     return output_j * (1 - output_j)
-  elif (activationFunction == linear):
+  elif (activationFunction == 1):
     return 1
-  elif (activationFunction == reLu):
+  elif (activationFunction == 3):
     return 1 if (output_j) >= 0 else 0
   else : # Softmax buat target class, ryan tolong isi
     return 0 # Isi sama turunan softmax
 
 def getErrorNodeOutput(target_j, output_j, activationFunction):
-  return (-1) * (derivate_Ed_To_NETj(target_j, output_j, activationFunction) * derivate_Oj_To_NETj(output_j, activationFunction))
+  return (-1) * (derivate_Ed_To_Oj(target_j, output_j, activationFunction) * derivate_Oj_To_NETj(output_j, activationFunction))
 
 # For Hidden Layer
 # d(Ed)/d(Wji) = d(Ed)/d(NETj) * d(NETj)/d(Wji)
@@ -61,7 +61,7 @@ def derivate_Ed_To_NETj(activationFunction, sigma,  output_j): # Ini masih gatau
 
 def derivate_Ed_To_NETj_Softmax(pj):
   return pj
-
+p
 
 # def derivate_Ed_To_NETk(errorNode_k):
 #   return (-1) * (errorNode_k)
