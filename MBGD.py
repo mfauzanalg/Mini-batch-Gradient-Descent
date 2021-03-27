@@ -2,9 +2,8 @@ from Layer import Layer
 from utils import getErrorNodeOutput, arrayMultiplication, derivate_Ed_To_NETj
 import json
 class MBGD:
-  
   # Masih kurang struktur jaringannya (jumlah layer, jumlah neuron setiap layer, fungsi aktivasi setiap layer)
-  def __init__(self, learning_rate=0.1, error_threshold=1.0048, max_iter=2000, batch_size=0, initial_weight=0.5):
+  def __init__(self, learning_rate=0.1, error_threshold=1.0048, max_iter=2000, batch_size=2, initial_weight=0.5):
     self.learning_rate = learning_rate
     self.error_threshold = error_threshold
     self.max_iter = max_iter
@@ -49,8 +48,7 @@ class MBGD:
 
   def fit(self, dataset, label):
     n_processed = 0
-    self.error = 999999999999999
-
+    self.error = self.error_threshold + 1
     while (self.epoch < self.max_iter and self.error > self.error_threshold):
       # E = 0
       update_weight = False
@@ -68,23 +66,16 @@ class MBGD:
               weight_arr = neuron.getWeightArray()
               for index_weight in range(len(weight_arr)):
                 weight_arr[index_weight] += accumulative_delta[index_weight]
-              neuron.accumulative_delta = []
+              neuron.accumulative_delta = [0 for i in range(len(weight_arr))]
                 
-        if(n_processed % len(dataset) == 0 and self.batch_size != len(dataset)):
+        if(n_processed != 0 and n_processed % len(dataset) == 0 and self.batch_size != len(dataset)):
           for layer in self.layerArray:
             for neuron in layer.getNeuronArray():
               accumulative_delta = neuron.getAccumulativeDelta()
               weight_arr = neuron.getWeightArray()
               for index_weight in range(len(weight_arr)):
-                if (self.epoch == 2):
-                  print(weight_arr[index_weight], "Before")
-                  print(accumulative_delta)
-                  print(accumulative_delta[index_weight], "ACCCC")
                 weight_arr[index_weight] += accumulative_delta[index_weight]
-                if (self.epoch == 2):
-                  print(weight_arr[index_weight], "after")
-                  print()
-              neuron.accumulative_delta = []
+              neuron.accumulative_delta = [0 for i in range(len(weight_arr))]
 
         n_processed+=1
 
@@ -106,7 +97,7 @@ class MBGD:
 
               if (len(neuron.getWeightArray()) == 0):
                 neuron.setWeight([self.initial_weight for i in range(len(prevLayerInputArray))])
-              
+                neuron.accumulative_delta = [0 for i in range(len(prevLayerInputArray))]
 
               sigma = arrayMultiplication(prevLayerInputArray, neuron.getWeightArray(), len(prevLayerInputArray))
               nextLayerInputArray.append(sigma)
@@ -188,11 +179,8 @@ class MBGD:
                   accumulative_delta[layerNeuron_idx] += self.learning_rate * layerNeuron.errorNode * prevLayer.output_array[layerNeuron_idx]
                 else :
                   accumulative_delta.append(self.learning_rate * layerNeuron.errorNode * prevLayer.output_array[layerNeuron_idx])
-              neuron.setAccumulativeDelta(accumulative_delta)
-              
+              neuron.setAccumulativeDelta(accumulative_delta) 
       self.epoch += 1
-      print(self.error)
-      print(self.error_threshold)
 
   # INI BEKAS YG FFNN
   def predict(self, dataset):
