@@ -2,6 +2,13 @@ import math
 import numpy as np
 from scipy.special import softmax
 
+def unique(list1):
+    list_set = set(list1)
+    unique_list = (list(list_set))
+    unique_list.sort()
+    return unique_list
+    
+
 def linear(arr):
   res = []
   for el in arr :
@@ -60,8 +67,8 @@ def getErrorNodeOutput(target_j, output_j, activationFunction):
 def derivate_Ed_To_NETj(activationFunction, sigma,  output_j): # Ini masih gatau bray
   return sigma * derivate_Oj_To_NETj(output_j, activationFunction)
 
-def derivate_Ed_To_NETj_Softmax(pj, target_j):
-  if (pj == target_j):
+def derivate_Ed_To_NETj_Softmax(pj, label, j):
+  if (j != label):
     return pj
   else:
     return -(1 - pj)

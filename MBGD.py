@@ -1,5 +1,5 @@
 from Layer import Layer
-from utils import getErrorNodeOutput, arrayMultiplication, derivate_Ed_To_NETj
+from utils import getErrorNodeOutput, arrayMultiplication, derivate_Ed_To_NETj, unique, derivate_Ed_To_NETj_Softmax
 import json
 class MBGD:
   # Masih kurang struktur jaringannya (jumlah layer, jumlah neuron setiap layer, fungsi aktivasi setiap layer)
@@ -34,10 +34,16 @@ class MBGD:
       newLayer.createNeuron()
     return newLayer
 
-  def createOutputLayer(self, activation):
+  def createOutputLayer(self, activation, totalDiffClass):
     newLayer = Layer(self.bias)
     newLayer.setType(activation)
-    newLayer.createNeuron()
+    if (activation == 4):
+      for i in range(totalDiffClass):
+        newLayer.createNeuron()
+    
+    else :
+      newLayer.createNeuron()
+    
     return newLayer
 
   def setLayer(self, layers):
@@ -131,28 +137,32 @@ class MBGD:
 
           # Pertama dia ada di output layer hitung error node output
           if (layerNum == len(self.layerArray) - 1):
-            for neuron_idx in range(len(layer.getNeuronArray())):
-              neuron = layer.getNeuron(neuron_idx)
-              # Target, Output, Layer.type
-              neuron.errorNode = getErrorNodeOutput(label[index_data], nextLayerInputArray[neuron_idx], layer.type)
+
+            if (layer.type == 4): # SOFTMAX Here
+              for neuron_idx in range(len(layer.getNeuronArray())):
+                neuron = layer.getNeuron(neuron_idx)
+                neuron.errorNode = (-1) * derivate_Ed_To_NETj_Softmax(nextLayerInputArray[neuron_idx], label[index_data], neuron_idx)
+              #   print(neuron.errorNode)
+              # print("Softmax")
+
+            else :
+              for neuron_idx in range(len(layer.getNeuronArray())):
+                neuron = layer.getNeuron(neuron_idx)
+                # Target, Output, Layer.type
+                neuron.errorNode = getErrorNodeOutput(label[index_data], nextLayerInputArray[neuron_idx], layer.type)
 
           # Sekarang ada di layer hidden
           else:
             nextLayer = self.layerArray[layerNum + 1]
             for neuron_idx in range(0, len(layer.getNeuronArray())):
               neuron = layer.getNeuron(neuron_idx)
-              
-              if (layer.getActivationFunction() == 4): # Softmax
-                neuron.errorNode = ""
-                
-              else:
-                totalWkhDk = 0
-                for nextLayerNeuron_idx in range(len(nextLayer.getNeuronArray())):
-                  nextLayerNeuron = nextLayer.getNeuron(nextLayerNeuron_idx)
-                  thisNeuronWeight = nextLayerNeuron.getWeight(neuron_idx+1)
-                  totalWkhDk += nextLayerNeuron.errorNode * thisNeuronWeight
+              totalWkhDk = 0
+              for nextLayerNeuron_idx in range(len(nextLayer.getNeuronArray())):
+                nextLayerNeuron = nextLayer.getNeuron(nextLayerNeuron_idx)
+                thisNeuronWeight = nextLayerNeuron.getWeight(neuron_idx+1)
+                totalWkhDk += nextLayerNeuron.errorNode * thisNeuronWeight
 
-                neuron.errorNode = derivate_Ed_To_NETj(layer.type, totalWkhDk, layer.output_array[neuron_idx+1])
+              neuron.errorNode = derivate_Ed_To_NETj(layer.type, totalWkhDk, layer.output_array[neuron_idx+1])
 
         # Delta Weight Update
         prevLayerInputArray = data
@@ -219,9 +229,9 @@ class MBGD:
           predicted_output = prevLayerInputArray
 
     # Input the Predicted output to output set
-      output_sets.append(predicted_output[1])
-      
-    return output_sets
+      output_sets.append(predicted_output[1:])
+    
+    return self.classify(output_sets, layer.type) 
 
   def printmodel(self):
     i = 1
@@ -243,22 +253,120 @@ class MBGD:
 
 
   def classify(self, output, activation):
-    # Sigmoid
     classified_output = []
     for i in range(len(output)):
-      # Sigmoid
-      if (activation == 2):
-        if (output[i] >= 0.5):
+      # Sigmoid && Linear && ReLU
+      if (activation == 1 or activation == 2 or activation == 3):
+        if (output[i][0] >= 0.5):
           classified_output.append(1)
         else:
           classified_output.append(0)
-      # Linear
-      elif (activation == 1):
-        if (output[i] >= 0.5):
-          classified_output.append(1)
-        else:
-          classified_output.append(0)
+      # softmax
+      else:
+        maxIndex = 0
+        for j in range(len(output[i])):
+          if(output[i][maxIndex] < output[i][j]):
+            maxIndex = j
+        classified_output.append(maxIndex)
 
     return classified_output
+
+  def confusion_matrix(self, y_test, pred):
+    # TN, TP, FN, FP
+    unique_val = unique(y_test)
+    confusion_matrix = []
+
+    for i in range(len(unique_val)):
+      confusion_matrix.append([0] * len(unique_val))
+
+    for y_idx in range(len(y_test)):
+      unique_index = unique_val.index(y_test[y_idx])
+
+      # Jika prediksinya benar
+      if (pred[y_idx] == y_test[y_idx]):
+        confusion_matrix[unique_index][unique_index] += 1
+ 
+      # Jika salah prediksi
+      else:
+        pred_index = unique_val.index(pred[y_idx])
+        confusion_matrix[unique_index][pred_index] += 1
+
+    return confusion_matrix
+  
+  def TP(self, c_matrix, index):
+    return c_matrix[index][index]
+
+  def TN(self, c_matrix, index):
+    count = 0
+    dim = len(c_matrix)
+    for i in range(dim):
+      for j in range(dim):
+        if (i != index or j != index):
+          count += 1
+    return count 
+
+  def FP(self, c_matrix, index):
+    count = 0
+    dim = len(c_matrix)
+    for i in range(dim):
+      if(i != index):
+        count += c_matrix[index][i]
+    return count 
+
+  def FN(self, c_matrix, index):
+    count = 0
+    dim = len(c_matrix)
+    for i in range(dim):
+      if(i != index):
+        count += c_matrix[i][index]
+    return count
+  
+  def precision(self, TP, FP):
+    if (TP == 0):
+      return 0
+    return (TP/(TP+FP))
+
+  def recall(self, TP, FN):
+    if (TP == 0):
+      return 0
+    return (TP/(TP+FN))
+
+  def F1(self, TP, FP, FN):
+    if (TP == 0):
+       return 0
+    return (2*TP/(2*TP + FP + FN))
+
+  def accuracy(self, c_matrix):
+    acc = 0
+    count = 0
+    dim = len(c_matrix)
+
+    for i in range(dim):
+      for j in range(dim):
+        count += c_matrix[i][j]
+
+    for i in range(dim):
+      acc += c_matrix[i][i]
+
+    if (acc == 0):
+      return 0
+    return acc/count
+  
+  def classification_report(self, c_matrix):
+    dim = len(c_matrix)
+    acc = 0
+    for i in range(len(c_matrix)):
+      print()
+      print("Class ", i)
+      print("Precission : ", self.precision(self.TP(c_matrix, i), self.FP(c_matrix, i)))
+      print("Recall     : ", self.recall(self.TP(c_matrix, i), self.FN(c_matrix, i)))
+      print("F1         : ", self.F1(self.TP(c_matrix, i), self.FP(c_matrix, i), self.FN(c_matrix, i)))
+    print()
+    print("Accuracy   :", self.accuracy(c_matrix))
+    return "finish"
+        
+
+
+    
 
     
