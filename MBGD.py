@@ -27,6 +27,39 @@ class MBGD:
     else:
       return None
 
+  def loadModel(self, filename):
+    file = open(filename, "r")
+    json_file = file.read()
+    layers = json.loads(json_file)
+    # input layer
+    for layer in layers:
+      self.createLayer()
+      newLayer = self.getLayer(len(self.layerArray)-1)
+      newLayer.setType(layer['type'])
+      for weight in layer['neurons']:
+        newLayer.createNeuron()
+        newNeuron = newLayer.getNeuron(len(newLayer.neuron_array)-1)
+        newNeuron.setWeight(weight)
+    file.close()
+    return self
+  
+  def saveModel(self, filename):
+    file = open(filename, "w")
+    saved_model = []
+    for layer in self.layerArray:
+      currentLayer = {
+        'neurons': [],
+        'type': None
+      }
+      currentLayer['type'] = layer.type
+      for neuron in layer.neuron_array:
+        currentLayer['neurons'].append(neuron.weight)
+      saved_model.append(currentLayer)
+    saved_model = json.dumps(saved_model)
+    file.write(saved_model)
+    file.close()
+    return saved_model
+
   def createHiddenLayer(self, nNeuron, activation):
     newLayer = Layer(self.bias)
     newLayer.setType(activation)
