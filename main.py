@@ -26,17 +26,46 @@ from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_iris
 from sklearn.metrics import accuracy_score, f1_score, classification_report
 from utils import unique
+from sklearn.utils import shuffle
+import numpy as np
 
 dataset = load_iris()
 
-X_train, X_test, y_train, y_test = train_test_split(dataset.data, dataset.target, random_state=1)
+X = dataset.data
+y = dataset.target
+
+new_X, new_y = shuffle(X, y, random_state=1)
+
+splitted_X = np.array_split(new_X, 10)
+splitted_y = np.array_split(new_y, 10)
+
+print(splitted_X)
+print(splitted_y)
+
+
+X_train = splitted_X[0]
+y_train = splitted_y[0]
+
+X_test = splitted_X[1]
+y_test = splitted_y[1]
+
+# print(new_X)
+# print(new_y)
+
+# X_train, X_test, y_train, y_test = train_test_split(dataset.data, dataset.target, random_state=1)
+
+# print(y_test)
+# print(y_train)
+
+# print(dataset)
+# print(y_test)
 
 mbgd = MBGD.MBGD()
 mbgd.setBias(1)
 
 totalDiffTargetClass = len(unique(y_train))
 
-hidden1 = mbgd.createHiddenLayer(2, 2)
+hidden1 = mbgd.createHiddenLayer(16, 2)
 output = mbgd.createOutputLayer(4, totalDiffTargetClass)
 
 mbgd.setLayer([hidden1, output])

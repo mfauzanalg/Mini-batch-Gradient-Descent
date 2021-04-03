@@ -29,7 +29,7 @@ class FFNN:
     json_file = file.read()
     layers = json.loads(json_file)
     # input layer
-    for layer in layers:
+    for layer in layers:1
       self.createLayer()
       newLayer = self.getLayer(len(self.layerArray)-1)
       newLayer.setType(layer['type'])
