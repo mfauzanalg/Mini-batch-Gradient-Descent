@@ -12,7 +12,7 @@ class MBGD:
     self.epoch = 0
     self.error = 0
     self.bias = 1
-    self.layerArray = None
+    self.layerArray = []
     
   def setBias(self, bias):
     self.bias = bias
@@ -33,13 +33,13 @@ class MBGD:
     layers = json.loads(json_file)
     # input layer
     for layer in layers:
-      self.createLayer()
-      newLayer = self.getLayer(len(self.layerArray)-1)
+      newLayer = Layer(self.bias)
       newLayer.setType(layer['type'])
       for weight in layer['neurons']:
         newLayer.createNeuron()
         newNeuron = newLayer.getNeuron(len(newLayer.neuron_array)-1)
         newNeuron.setWeight(weight)
+      self.layerArray.append(newLayer)
     file.close()
     return self
   
